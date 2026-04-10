@@ -17,8 +17,18 @@ export const useWallet = () => {
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
     const address = await signer.getAddress();
-    setWallet({ provider, signer, address });
-    return { provider, signer, address };
+
+    // ENS lookup on mainnet
+    let ensName = null;
+    try {
+      const mainnetProvider = new ethers.JsonRpcProvider(
+        process.env.NEXT_PUBLIC_ALCHEMY_MAINNET_URL
+      );
+      ensName = await mainnetProvider.lookupAddress(address);
+    } catch (err) { console.error('ENS lookup failed', err); }
+
+    setWallet({ provider, signer, address, ensName });
+    return { provider, signer, address, ensName };
   };
 
   return { wallet, setWallet, connectWallet };

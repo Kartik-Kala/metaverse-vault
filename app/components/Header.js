@@ -14,8 +14,8 @@ export default function Header({ wallet, onConnect }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#5dc94a' }} />
           <span style={{ fontSize: '0.8rem', color: '#5dc94a', fontFamily: 'monospace' }}>
-            {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
-          </span>
+  {wallet.ensName || `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`}
+</span>
         </div>
       )}
     </div>

@@ -1,11 +1,14 @@
 'use client';
 import { useState, useRef } from 'react';
+import { fetchUserNFTs } from '../utils/ipfs';
 
-export default function StoreForm({ onStore, loading, status, statusType }) {
+export default function StoreForm({ onStore, loading, status, statusType, walletAddress }) {
   const [formData, setFormData] = useState({ username: '', bio: '', dataType: 'Profile' });
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarPreview, setAvatarPreview] = useState(null);
+  const [nfts, setNfts] = useState([]);
+  const [loadingNFTs, setLoadingNFTs] = useState(false);
   const fileRef = useRef();
 
   const handleFileChange = (e) => {
@@ -35,13 +38,28 @@ export default function StoreForm({ onStore, loading, status, statusType }) {
     }
   });
 
+  const handleImportNFTs = async () => {
+    if (!walletAddress) return alert('Connect wallet first');
+    setLoadingNFTs(true);
+    try {
+      const result = await fetchUserNFTs(walletAddress);
+      setNfts(result);
+      setFormData({ ...formData, dataType: 'NFT Collection' });
+    } catch (err) {
+      alert('Could not fetch NFTs: ' + err.message);
+    }
+    setLoadingNFTs(false);
+  };
+
   const handleSubmit = async () => {
     const avatarData = await getAvatarData();
-    await onStore(formData, avatarData);
+    const payload = formData.dataType === 'NFT Collection' ? { ...formData, nfts } : formData;
+    await onStore(payload, avatarData);
     setFormData({ username: '', bio: '', dataType: 'Profile' });
     setAvatarFile(null);
     setAvatarUrl('');
     setAvatarPreview(null);
+    setNfts([]);
   };
 
   const statusColors = { info: '#888', success: '#5dc94a', error: '#ff4444' };
@@ -81,7 +99,33 @@ export default function StoreForm({ onStore, loading, status, statusType }) {
           <option>Profile</option>
           <option>Avatar</option>
           <option>Asset</option>
+          <option>NFT Collection</option>
         </select>
+
+        {/* NFT Import Section */}
+        {formData.dataType === 'NFT Collection' && (
+          <div style={{ marginBottom: '14px' }}>
+            <button onClick={handleImportNFTs} disabled={loadingNFTs} style={{ ...btnStyle, width: '100%', background: '#1a1a1a', color: '#5dc94a', border: '1px solid #5dc94a22', fontSize: '0.8rem', marginBottom: '10px' }}>
+              {loadingNFTs ? 'Fetching NFTs...' : '⬡ Import My NFTs from Wallet'}
+            </button>
+            {nfts.length > 0 && (
+              <div style={{ maxHeight: '160px', overflowY: 'auto' }}>
+                {nfts.map((nft, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px', background: '#0d0d0d', borderRadius: '6px', marginBottom: '4px' }}>
+                    {nft.image && <img src={nft.image} alt={nft.name} style={{ width: '32px', height: '32px', borderRadius: '4px', objectFit: 'cover' }} />}
+                    <div>
+                      <p style={{ fontSize: '0.7rem', color: '#fff', margin: 0 }}>{nft.name}</p>
+                      <p style={{ fontSize: '0.65rem', color: '#555', margin: 0 }}>{nft.collection} #{nft.tokenId}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {nfts.length === 0 && !loadingNFTs && (
+              <p style={{ fontSize: '0.75rem', color: '#444', textAlign: 'center' }}>No NFTs found or not imported yet</p>
+            )}
+          </div>
+        )}
 
         <button onClick={handleSubmit} disabled={loading} style={{ ...btnStyle, width: '100%', marginTop: '8px', opacity: loading ? 0.7 : 1 }}>
           {loading ? 'Processing...' : 'Encrypt & Store'}

@@ -45,7 +45,7 @@ export default function Home() {
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-            <StoreForm onStore={storeData} loading={loading} status={status} statusType={statusType} />
+            <StoreForm onStore={storeData} loading={loading} status={status} statusType={statusType} walletAddress={wallet?.address} />
             <div>
               <VaultList entries={vaultEntries} onRetrieve={retrieveAndDecrypt} />
               <DecryptedCard data={decryptedData} />
